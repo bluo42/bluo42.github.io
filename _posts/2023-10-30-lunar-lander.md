@@ -1,12 +1,12 @@
 ---
 title: "Grid Q-Learning vs Deep SARSA for Lunar Lander"
+classes: wide
 defaults:
   - scope:
       path: ""
       type: posts
     values:
       layout: single
-      classes: wide
       author_profile: true
       read_time: true
       comments: true
