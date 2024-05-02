@@ -5,7 +5,7 @@ defaults:
       type: posts
     values:
       layout: single
-      author_profile: false
+      author_profile: true
       read_time: true
       comments: true
       share: true
@@ -37,5 +37,5 @@ Knowing this, we will define a lower and upper bound for each state variable to 
 
 <div class="imgcap">
 <img src="/assets/images/lunar_lander/Discretization.jpg">
-<div class="thecap">Examples of RL in the wild. <b>From left to right</b>: Deep Q Learning network playing ATARI, AlphaGo, Berkeley robot stacking Legos, physically-simulated quadruped leaping over terrain.</div>
+<div class="thecap">Example of discretizing the x and y features.</div>
 </div>
