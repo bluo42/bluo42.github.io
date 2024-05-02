@@ -16,6 +16,13 @@ defaults:
 ### Summary
 We explore two approaches to solving the Lunar Lander simulation provided by OpenAI: the first approach employs Discretized Q-Learning (discretized QL), and the second utilizes Deep SARSA with a neural network approximator. We achieve a considerable amount of learning in discretized Q-Learning and reached an average reward of 111.4. Our implementation of Deep SARSA performed better, solving the environment with an average reward of 256.3.
 
+
+<figure class="half">
+    <a href="/assets/images/lunar_lander/animation_disc.jpg"><img src="/assets/images/lunar_lander/animation_disc.jpg"></a>
+    <a href="/assets/images/lunar_lander/animation_sarsa.jpg"><img src="/assets/images/lunar_lander/animation_sarsa.jpg"></a>
+    <figcaption>Left shows our grid discretization learner. Right shows Deep SARSA learner. </figcaption>
+</figure>
+
 ### Introduction
 
 The Lunar Lander environment from OpenAI is an emulation of an Atari game where the player must land a lunar vehicle on a randomly generated lunar floor. The environment handles the inputs for us, providing us with the position and coordinates of the lander, and the x, y and angular velocities in a continuous observation space. The environment will give instantaneous rewards depending on the position and velocity of the Lander, and a +100/-100 final reward for a successful/failed landing, respectively. Rewards are designed so an increased reward is earned if the Lander moves closer to the landing pad, and its velocity approaches 0. 
@@ -44,10 +51,10 @@ We start by discretizing the 8-feature continuous state space into an 8-dimensio
 
 Knowing this, we will define a lower and upper bound for each state variable to create a discretization grid, with the area outside the high-value area being only defined by one state. Thus, the entire observation space will be divided into ni states, and the area within the high-value area will be discretized into (n_i – 2) states, which is defined by the discretization scheme. Within the respective high-value area, we will create a “grid” of (n_i – 2) evenly divided discrete ranges. The discretization scheme is the list n, that contains the number of states for each feature. The high value regions will be fixed and set manually.
 
-<div class="imgcap">
+<figure>
   <img src="/assets/images/lunar_lander/Discretization.jpg" alt="Discretization Example">
-  <div class="thecap">Example of discretizing the x and y features.</div>
-</div>
+  <figcaption>Example of discretizing the x and y features.</figcaption>
+</figure>
 
 We tune the discretization scheme, epsilon (initial and decay), and alpha over 1,000 episodes.
 
@@ -56,15 +63,17 @@ We can see that by using discretized state space Q-learning we were able to get 
 
 The training data does show convergence in the training data around 10,000 episodes in, and no further learning appears to be happening. This can be due to the relatively low number of episodes and high number of states, therefore not allowing us to learn on each state effectively. Testing more granular discretization schemes while running more episodes may show better results. However, it may be difficult to pinpoint exactly which discretization bins would work best for this data without domain knowledge, which is against the spirit of reinforcement learning.
 
-<div class="imgcap">
+<figure>
   <img src="/assets/images/lunar_lander/discretized_training.png" alt="Discretized Q-learning Results">
-</div>
+  <figcaption>Discretized Q-learning Results.</figcaption>
+</figure>
 
 For the evaluation set, we set epsilon to 0 and turned off learning. Those results are shown below, with an average score of 111, which indicate that most of the episodes were actually successful landings. However, the failed landings caused large negative scores which brought down the scores significantly. 
 
-<div class="imgcap">
+<figure>
   <img src="/assets/images/lunar_lander/discretized_test.jpg" alt="Discretized Q-learning Test">
-</div>
+  <figcaption>Discretized Q-learning Test.</figcaption>
+</figure>
 
 ### Deep SARSA
 
@@ -90,15 +99,17 @@ We tune the alpha, gamma, and hidden layer sizes over 2,000 episodes.
 #### Results
 Our final SARSA results are shown in Fig. 9 and 10 below. The training data showed signs of convergence once we reached around 4,000 episodes, with the average rewards fluctuating around the 250 level. We maintained a minimum epsilon of 0.01 through the training process to prevent overfitting and continue exploring paths, which led to a bit of volatility in the latter half of the training data and higher errors compared to the test.
 
-<div class="imgcap">
+<figure>
   <img src="/assets/images/lunar_lander/sarsa_training.jpg" alt="SARSA Training">
-</div>
+  <figcaption>SARSA Training</figcaption>
+</figure>
 
 For the evaluation set, we set epsilon to 0 and turned off learning. We were able to solve the problem by averaging greater than 200 total rewards per episode over a 100-episode span. In fact, we averaged 256.3 with a standard deviation of 57.8 over the test of 1,000 episodes. Two strata of results began to appear, those in the 225 and above rewards and those below 200. After analyzing the animated episodes where the agent fails to achieve 200, the agent often continues firing fuel even when the Lander has landed. This behavior is often due to uneven floors and other edge cases. Further parameters can be introduced to account for these cases and allow the agent to maneuver out of them.
 
-<div class="imgcap">
+<figure>
   <img src="/assets/images/lunar_lander/sarsa_test.jpg" alt="SARSA Test">
-</div>
+  <figcaption>SARSA Test</figcaption>
+</figure>
 
 Overall, the Deep SARSA algorithm did an excellent job at training an agent to successfully navigate the Lunar Lander environment. The ability to map the continuous input state to (s, a) pairs via the neural network proved to be very effective in creating an functioning agent. 
 
