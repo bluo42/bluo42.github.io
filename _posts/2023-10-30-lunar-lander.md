@@ -18,8 +18,8 @@ We explore two approaches to solving the Lunar Lander simulation provided by Ope
 
 
 <figure class="half">
-    <a href="/assets/images/lunar_lander/animation_disc.jpg"><img src="/assets/images/lunar_lander/animation_disc.jpg"></a>
-    <a href="/assets/images/lunar_lander/animation_sarsa.jpg"><img src="/assets/images/lunar_lander/animation_sarsa.jpg"></a>
+    <a href="/assets/images/lunar_lander/animation_disc.gif"><img src="/assets/images/lunar_lander/animation_disc.gif"></a>
+    <a href="/assets/images/lunar_lander/animation_sarsa.gif"><img src="/assets/images/lunar_lander/animation_sarsa.gif"></a>
     <figcaption>Left shows our grid discretization learner. Right shows Deep SARSA learner. </figcaption>
 </figure>
 
