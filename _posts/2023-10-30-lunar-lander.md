@@ -2,6 +2,7 @@
 title: "Grid Q-Learning vs Deep SARSA for Lunar Lander"
 classes: wide
 defaults:
+  # _posts
   - scope:
       path: ""
       type: posts
@@ -117,3 +118,7 @@ Overall, the Deep SARSA algorithm did an excellent job at training an agent to s
 Theoretically, Discretized Q-Learning and Deep SARSA are both ways that we can approximate values of Q(s,a) through learning from experience, that will converge given enough experiences. The issue with the discretized Q-Learning procedure is the difficultly in finding a useful discretization scheme such that a high-performing agent could be achieved. I could see how using a discretized process could be a viable choice in lower dimensional domains. It would be interesting to see if additional runs and varying the “high-value” area would yield results.
 
 Deep SARSA likely performed better in the Lunar Lander environment is because the neural network was able to learn complex patterns through backpropagation and without explicit mapping to features like we did with discretized Q-Learning. Although vanilla Q-Learning would work well for small state spaces, a large continuous state space appears to be handled much better by a parametric function approximator such as a neural network.
+
+### References
+1. Richard S. Sutton and Andrew G. Barto, "Reinforcement Learning: An Introduction," MIT Press, 2nd edition, 2020.
+2. V. Mnih et al., "Playing Atari with Deep Reinforcement Learning," 2013.
