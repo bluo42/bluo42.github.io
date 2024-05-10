@@ -113,9 +113,9 @@ analytics:
 author:
   name             : "Brandon Luo"
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : #"I am an **amazing** person."
-  location         : #"Somewhere"
-  email            :
+  bio              : I'm an enthusiast of ML/AI applications to finance and decision making
+  location         : California
+  email            : 
   links:
     - label: "Email"
       icon: "fas fa-fw fa-envelope-square"
