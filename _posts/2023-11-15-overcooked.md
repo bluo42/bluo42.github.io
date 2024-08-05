@@ -21,7 +21,7 @@ defaults:
 </figure>
 
 <figure class="half">
-    <a href="/assets/images/overcooked/gif_layout4.gif"><img src="/assets/images/overcooked/gif_layout4.gif"></a>
+    <a href="/assets/images/overcooked/gif_layout2.gif"><img src="/assets/images/overcooked/gif_layout2.gif"></a>
     <a href="/assets/images/overcooked/gif_layout5.gif"><img src="/assets/images/overcooked/gif_layout5.gif"></a>
     <figcaption>Results from Overcooked Multi-Agent Learner </figcaption>
 </figure>
