@@ -37,7 +37,9 @@ The Overcooked AI environment is a simplified replication of a multi-player coop
 ### Reward Shaping
 The first step in building our multi-agent network is to define a reward shaping system that is suitable for our multi-agent environment. We use the reward shaping to impart domain knowledge of the environment to the agents. The global reward from these events will have to be tuned to be large enough to noticeably improve learning but not too large that they interfere with the global objective. The rewards must also not be exploitable and counterproductive.
 
-<img src="/assets/images/overcooked/vdn_rewards.png" alt="Reward Shaping" width="500"/>
+<div style="text-align: center;">
+  <img src="/assets/images/overcooked/vdn_rewards.png" alt="Reward Shaping" width="500"/>
+</div>
 
 After some ad-hoc testing in our simple environments, we decided on adding the rewards shown below:
 - +3: begin cooking with 3 onions
@@ -51,7 +53,9 @@ Next, we implement value decomposition to allow for Q-values to be shared betwee
 
 The replay buffer will be updated so it will take both agents’ states and actions, thereby allowing agents to centrally train. In execution, however, the best action will be taken independently by each agent to maximize their own Q’.
 
-<img src="/assets/images/overcooked/vdn_implementation.png" alt="VDN Implementation" width="500"/>
+<div style="text-align: center;">
+  <img src="/assets/images/overcooked/vdn_implementation.png" alt="VDN Implementation" width="500"/>
+</div>
 
 The formulas describing the calculation of the Q’ values are shown below. Note we will have to select weights \(w\) for the Q’ sum. For our experiments, we will use \(w_1, w_2 = 1\) as it is straightforward and symmetry of rewards.
 
@@ -77,7 +81,9 @@ We tune alpha, gamma and epsilon decay hyperparameters using a Grid Search acros
 ### Training Performance
 Our training performance (measured by soups made per episode) for layouts [1, 2, 3, 5] are shown  below. We were able to hit our target 7 soups delivered for [1, 2, 3, 5] during training. We note that the learning curves for layouts 1 to 3 were quite monotonic and smooth, while layout 5 has a more sporadic learning curve. While learning layout 5, our agent had a much more difficult time learning how to deliver a single soup, and took until around 1500 episodes before it was able to reliably generate soups. This was expected because layout 5 requires the agents to cooperate in order to achieve the goal.
 
-<img src="/assets/images/overcooked/vdn_training.png" alt="VDN Training" width="500"/>
+<div style="text-align: center;">
+  <img src="/assets/images/overcooked/vdn_training.png" alt="VDN Training" width="800"/>
+</div>
 
 ## Conclusion and Further Work
 We saw the importance of global reward shaping and tailoring a natively multi-agent approach to this problem, where we saw a drastic performance improvement – despite using the same base DQN for the agents. The learning curve and peak performance was drastically improved from the inclusion of these elements. Based on the promising initial results, we believe a cleverer execution of the value decomposition method and further tuning of the reward mechanism could result in even better performance. Further work in the decomposition should allow for better credit assignment, which would improve our agent performance in layouts that require higher coordination.
