@@ -16,8 +16,8 @@ defaults:
 ---
 
 <figure class="half">
-    <a href="/assets/images/overcooked/gif_layout2.gif"><img src="/assets/images/overcooked/gif_layout2.gif"></a>
     <a href="/assets/images/overcooked/gif_layout3.gif"><img src="/assets/images/overcooked/gif_layout3.gif"></a>
+    <a href="/assets/images/overcooked/gif_layout4.gif"><img src="/assets/images/overcooked/gif_layout4.gif"></a>
 </figure>
 
 <figure class="half">
@@ -37,7 +37,7 @@ The Overcooked AI environment is a simplified replication of a multi-player coop
 ### Reward Shaping
 The first step in building our multi-agent network is to define a reward shaping system that is suitable for our multi-agent environment. We use the reward shaping to impart domain knowledge of the environment to the agents. The global reward from these events will have to be tuned to be large enough to noticeably improve learning but not too large that they interfere with the global objective. The rewards must also not be exploitable and counterproductive.
 
-<img src="/assets/images/overcooked/vdn_rewards.png" alt="Reward Shaping" width="200"/>
+<img src="/assets/images/overcooked/vdn_rewards.png" alt="Reward Shaping" width="500"/>
 
 After some ad-hoc testing in our simple environments, we decided on adding the rewards shown below:
 - +3: begin cooking with 3 onions
@@ -51,14 +51,25 @@ Next, we implement value decomposition to allow for Q-values to be shared betwee
 
 The replay buffer will be updated so it will take both agents’ states and actions, thereby allowing agents to centrally train. In execution, however, the best action will be taken independently by each agent to maximize their own Q’.
 
-<img src="/assets/images/overcooked/vdn_implementation.png" alt="VDN Implementation" width="200"/>
+<img src="/assets/images/overcooked/vdn_implementation.png" alt="VDN Implementation" width="500"/>
 
 The formulas describing the calculation of the Q’ values are shown below. Note we will have to select weights \(w\) for the Q’ sum. For our experiments, we will use \(w_1, w_2 = 1\) as it is straightforward and symmetry of rewards.
 
-\[ Q_1'(s_1, s_2, a_1, a_2) = Q_1(s_1, a_1) + w_1 \cdot Q_2(s_2, a_2) \]  
-\[ Q_2'(s_1, s_2, a_1, a_2) = w_2 \cdot Q_1(s_1, a_1) + Q_2(s_2, a_2) \]  
-\[ \text{Loss}_1 = (R_1 + R_2 + \gamma \max_{a'} Q_1'(s', a') - Q_1'(s, a))^2 \]  
-\[ \text{Loss}_2 = (R_1 + R_2 + \gamma \max_{a'} Q_2'(s', a') - Q_2'(s, a))^2 \]
+$$
+Q_1'(s_1, s_2, a_1, a_2) = Q_1(s_1, a_1) + w_1 \cdot Q_2(s_2, a_2)
+$$
+
+$$
+Q_2'(s_1, s_2, a_1, a_2) = w_2 \cdot Q_1(s_1, a_1) + Q_2(s_2, a_2)
+$$
+
+$$
+\text{Loss}_1 = (R_1 + R_2 + \gamma \max_{a'} Q_1'(s', a') - Q_1'(s, a))^2
+$$
+
+$$
+\text{Loss}_2 = (R_1 + R_2 + \gamma \max_{a'} Q_2'(s', a') - Q_2'(s, a))^2
+$$
 
 ## Hyperparameter Tuning
 We tune alpha, gamma and epsilon decay hyperparameters using a Grid Search across the first 1000 episodes. 
