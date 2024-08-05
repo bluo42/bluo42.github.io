@@ -17,110 +17,73 @@ defaults:
 
 <figure class="half">
     <a href="/assets/images/overcooked/gif_layout2.gif"><img src="/assets/images/overcooked/gif_layout2.gif"></a>
-    <a href="/assets/images/overcooked/gif_layout2.gif"><img src="/assets/images/overcooked/gif_layout2.gif"></a>
-    <figcaption>Left shows our grid discretization learner. Right shows Deep SARSA learner. </figcaption>
+    <a href="/assets/images/overcooked/gif_layout3.gif"><img src="/assets/images/overcooked/gif_layout3.gif"></a>
 </figure>
 
+<figure class="half">
+    <a href="/assets/images/overcooked/gif_layout4.gif"><img src="/assets/images/overcooked/gif_layout4.gif"></a>
+    <a href="/assets/images/overcooked/gif_layout5.gif"><img src="/assets/images/overcooked/gif_layout5.gif"></a>
+    <figcaption>Results from Overcooked Multi-Agent Learner </figcaption>
+</figure>
 
 ### Summary
-We explore solving the Overcooked AI Gym environment (https://github.com/HumanCompatibleAI/overcooked_ai)
+We explore solving the Overcooked AI Gym environment (https://github.com/HumanCompatibleAI/overcooked_ai) using a Multi Agent Reinforcement Learning method based on a function of the individual agents' Q-values. We implement a system of two separate agents with a shared Q-value based on the weighted sum of the Q-values of the independent agents. This system was able to perform substantially better, clearing all five layouts, and performing especially well on the ones requiring cooperation (shown above).
+
+## Problem Statement
+The Overcooked AI environment is a simplified replication of a multi-player cooperative video game. Rewards are sparse, with only environment rewards coming from the completion of a soup delivery. Unlike single agent problems, the Overcooked problem has a distinct observation space for each agent. Execution must be decentralized while training can be based on global observations. The difficulty of this problem comes from the proper attribution of rewards and the need to train each agent with total rewards from the environment, while also connecting the causality of the rewards to each agent’s actions. We opt to go for a modified approach of Value Decomposition Networks of combining the Q-values of the two separate agents.
 
 
-### Introduction
+## Value Decomposition Setup
+### Reward Shaping
+The first step in building our multi-agent network is to define a reward shaping system that is suitable for our multi-agent environment. We use the reward shaping to impart domain knowledge of the environment to the agents. The global reward from these events will have to be tuned to be large enough to noticeably improve learning but not too large that they interfere with the global objective. The rewards must also not be exploitable and counterproductive.
 
-The Lunar Lander environment from OpenAI is an emulation of an Atari game where the player must land a lunar vehicle on a randomly generated lunar floor. The environment handles the inputs for us, providing us with the position and coordinates of the lander, and the x, y and angular velocities in a continuous observation space. The environment will give instantaneous rewards depending on the position and velocity of the Lander, and a +100/-100 final reward for a successful/failed landing, respectively. Rewards are designed so an increased reward is earned if the Lander moves closer to the landing pad, and its velocity approaches 0. 
+<img src="/assets/images/overcooked/vdn_rewards.png" alt="Reward Shaping" width="200"/>
 
-The variables of the state are shown below. 
+After some ad-hoc testing in our simple environments, we decided on adding the rewards shown below:
+- +3: begin cooking with 3 onions
+- -3: begin cooking with <3 onions
+- +0.05: useful onion/dish pickup/drop
+- -1: dropping a soup
+- +0.5: viable onion potting
 
-$$
-[x, y, v_x, v_y, θ, v_θ, leg_L, leg_R]
-$$
+### Value Decomposition (VDN) Setup and Methods
+Next, we implement value decomposition to allow for Q-values to be shared between the two agents. See below for our implementation. We will take a weighted sum of both agents’ Q-values for all state-action pairs. The sum is combined into a per-agent Q’, which is the blended sum. We calculate optimal actions and loss from this Q’. The loss is backpropagated through the new Q’, allowing each agent to factor the Q-values of the other.
 
-x and y are the location of the Lander, θ is the angle and variables shown as v refer to the velocity. The first six variables are used to determine the overall flight of the Lander. The last two will be used in the landing of the lift to indicate if the left or right leg has made contact.
+The replay buffer will be updated so it will take both agents’ states and actions, thereby allowing agents to centrally train. In execution, however, the best action will be taken independently by each agent to maximize their own Q’.
 
-### Discretized Q-Learning
+<img src="/assets/images/overcooked/vdn_implementation.png" alt="VDN Implementation" width="200"/>
 
-#### Methods
-Initially, we use an off-policy Q-Learning algorithm along with a discretization scheme to attempt the problem, which means the Q update is done based on the maximum value action in the current Q table, rather than solely the on-policy action. The naive approach to solving this problem seems to be a grid discretization. The update rule we use is shown below:
+The formulas describing the calculation of the Q’ values are shown below. Note we will have to select weights \(w\) for the Q’ sum. For our experiments, we will use \(w_1, w_2 = 1\) as it is straightforward and symmetry of rewards.
 
-$$
-Q(s,a) = Q(s,a) + \alpha \left[r + \gamma \max_{a'} Q(s',a') - Q(s,a)\right]
-$$
+\[ Q_1'(s_1, s_2, a_1, a_2) = Q_1(s_1, a_1) + w_1 \cdot Q_2(s_2, a_2) \]  
+\[ Q_2'(s_1, s_2, a_1, a_2) = w_2 \cdot Q_1(s_1, a_1) + Q_2(s_2, a_2) \]  
+\[ \text{Loss}_1 = (R_1 + R_2 + \gamma \max_{a'} Q_1'(s', a') - Q_1'(s, a))^2 \]  
+\[ \text{Loss}_2 = (R_1 + R_2 + \gamma \max_{a'} Q_2'(s', a') - Q_2'(s, a))^2 \]
 
-We also employ an ε-greedy exploration strategy in our implementation. For every state that the agent encounters, we will choose with probability ε to do a uniform random action from the action space. This ε is decayed as the agent continues to train on more episodes, so as to prioritize exploitation. 
+## Hyperparameter Tuning
+We tune alpha, gamma and epsilon decay hyperparameters using a Grid Search across the first 1000 episodes. 
 
-#### Naive Discretization
-We start by discretizing the 8-feature continuous state space into an 8-dimensional grid. We do face the curse of dimensionality by discretizing, as the size of the grid will grow exponentially with the number of features. To counteract this, we define the area associated with the goal of landing on the platform as a high value area. We use our knowledge that landing in the flat region between the flags requires the lunar lander to be oriented with legs down, and positioned near the middle of the environment. This requires all of the state position and velocity variables to be close to 0. 
+### Training Performance
+Our training performance (measured by soups made per episode) for layouts [1, 2, 3, 5] are shown  below. We were able to hit our target 7 soups delivered for [1, 2, 3, 5] during training. We note that the learning curves for layouts 1 to 3 were quite monotonic and smooth, while layout 5 has a more sporadic learning curve. While learning layout 5, our agent had a much more difficult time learning how to deliver a single soup, and took until around 1500 episodes before it was able to reliably generate soups. This was expected because layout 5 requires the agents to cooperate in order to achieve the goal.
 
-Knowing this, we will define a lower and upper bound for each state variable to create a discretization grid, with the area outside the high-value area being only defined by one state. Thus, the entire observation space will be divided into ni states, and the area within the high-value area will be discretized into (n_i – 2) states, which is defined by the discretization scheme. Within the respective high-value area, we will create a “grid” of (n_i – 2) evenly divided discrete ranges. The discretization scheme is the list n, that contains the number of states for each feature. The high value regions will be fixed and set manually.
+<img src="/assets/images/overcooked/vdn_training.png" alt="VDN Training" width="200"/>
 
-<figure>
-  <img src="/assets/images/lunar_lander/Discretization.jpg" alt="Discretization Example">
-  <figcaption>Example of discretizing the x and y features.</figcaption>
-</figure>
+## Conclusion and Further Work
+We saw the importance of global reward shaping and tailoring a natively multi-agent approach to this problem, where we saw a drastic performance improvement – despite using the same base DQN for the agents. The learning curve and peak performance was drastically improved from the inclusion of these elements. Based on the promising initial results, we believe a cleverer execution of the value decomposition method and further tuning of the reward mechanism could result in even better performance. Further work in the decomposition should allow for better credit assignment, which would improve our agent performance in layouts that require higher coordination.
 
-We tune the discretization scheme, epsilon (initial and decay), and alpha over 1,000 episodes.
+1. Continue to modify the reward structure to capture more subgoal completions, such as when a completed soup moves closer to the serving area. One possible addition is using dish drops, mentioned in section IV.
+2. Increase the number or size of hidden layers in each DQN to allow them to capture more complex relationships between features.
+3. Adjust the Q’ weights systematically to assign credit and rewards to each agent with greater weight to their contribution.
+4. Implement an additional neural network to select the mixing weights of the individual Q-networks, such as that used in QMIX [4].
 
-#### Results
-We can see that by using discretized state space Q-learning we were able to get considerable amount of learning done, although not reaching an above our goal of a 200 average. The mean of the 1,000 episodes in the testing phase was 111.4 with a standard deviation of 140.1. 
+## References
 
-The training data does show convergence in the training data around 10,000 episodes in, and no further learning appears to be happening. This can be due to the relatively low number of episodes and high number of states, therefore not allowing us to learn on each state effectively. Testing more granular discretization schemes while running more episodes may show better results. However, it may be difficult to pinpoint exactly which discretization bins would work best for this data without domain knowledge, which is against the spirit of reinforcement learning.
+[1] Richard S Sutton and Andrew G Barto. Reinforcement learning: An introduction. 2nd Ed. MIT press, 2020.
 
-<figure>
-  <img src="/assets/images/lunar_lander/discretized_training.png" alt="Discretized Q-learning Results">
-  <figcaption>Discretized Q-learning Results.</figcaption>
-</figure>
+[2] V. Mnih, K. Kavukcuoglu, D. Silver, A. Graves, I. Antonoglou, D. Wierstra, and M. Riedmiller, “Playing Atari with Deep Reinforcement Learning,” 2013.
 
-For the evaluation set, we set epsilon to 0 and turned off learning. Those results are shown below, with an average score of 111, which indicate that most of the episodes were actually successful landings. However, the failed landings caused large negative scores which brought down the scores significantly. 
+[3] Sunehag, P., Lever, G., Gruslys, A., Czarnecki, W. M., Zambaldi, V., Jaderberg, M., et. al.. “Value-Decomposition Networks For Cooperative Multi-Agent Learning”, 2017
 
-<figure>
-  <img src="/assets/images/lunar_lander/discretized_test.jpg" alt="Discretized Q-learning Test">
-  <figcaption>Discretized Q-learning Test.</figcaption>
-</figure>
+[4] Rashid, T., Samvelyan, M., De Witt, C. S., Farquhar, G., Foerster, J., & Whiteson, S. (2020). Monotonic value function factorisation for deep multi-agent reinforcement learning. The Journal of Machine Learning Research, 21(1), 7234-7284.
 
-### Deep SARSA
-
-#### Methods
-We attempt to use an on-policy Deep SARSA algorithm to train a learner. Deep SARSA employs a neural network that takes as the input space of 8 features through a fully-connected layer, outputting the expected reward of each of the 4 possible actions. The Q-value update is done on-policy, which means the Q update is done based on the policy chosen, a’, rather than maximum Q value a. The SARSA update rule is shown below: 
-
-$$
-Q(s,a) = Q(s,a) + \alpha \left[r + \gamma Q(s',a') - Q(s,a)\right]
-$$
-
-The neural network approximates the action-value function similarly to a Q-table and is defined by a set of parameters that represents the weights and biases in the network. The loss function is defined as the squared Temporal Difference error:
-
-$$
-\text{Loss} = \left[ r + \gamma Q(s', a') - Q(s, a) \right]^2
-$$
-
-On each step, we use the Adam optimizer and update the parameters in the direction that minimizes the loss. Adam was chosen as the optimizer as it has adaptive learning rates and considers momentum, which can reduce the amount of noise and promote convergence.
-
-We continue to employ ε-greedy exploration in Deep SARSA as well, similarly to our discretized Q-learning procedure. Additionally, to avoid the effects of overfitting and deterioration of the neural network, we will store the best performing parameters in the training set for use against the testing set. 
-
-We tune the alpha, gamma, and hidden layer sizes over 2,000 episodes.
-
-#### Results
-Our final SARSA results are shown in Fig. 9 and 10 below. The training data showed signs of convergence once we reached around 4,000 episodes, with the average rewards fluctuating around the 250 level. We maintained a minimum epsilon of 0.01 through the training process to prevent overfitting and continue exploring paths, which led to a bit of volatility in the latter half of the training data and higher errors compared to the test.
-
-<figure>
-  <img src="/assets/images/lunar_lander/sarsa_training.jpg" alt="SARSA Training">
-  <figcaption>SARSA Training</figcaption>
-</figure>
-
-For the evaluation set, we set epsilon to 0 and turned off learning. We were able to solve the problem by averaging greater than 200 total rewards per episode over a 100-episode span. In fact, we averaged 256.3 with a standard deviation of 57.8 over the test of 1,000 episodes. Two strata of results began to appear, those in the 225 and above rewards and those below 200. After analyzing the animated episodes where the agent fails to achieve 200, the agent often continues firing fuel even when the Lander has landed. This behavior is often due to uneven floors and other edge cases. Further parameters can be introduced to account for these cases and allow the agent to maneuver out of them.
-
-<figure>
-  <img src="/assets/images/lunar_lander/sarsa_test.jpg" alt="SARSA Test">
-  <figcaption>SARSA Test</figcaption>
-</figure>
-
-Overall, the Deep SARSA algorithm did an excellent job at training an agent to successfully navigate the Lunar Lander environment. The ability to map the continuous input state to (s, a) pairs via the neural network proved to be very effective in creating an functioning agent. 
-
-### Comparison
-Theoretically, Discretized Q-Learning and Deep SARSA are both ways that we can approximate values of Q(s,a) through learning from experience, that will converge given enough experiences. The issue with the discretized Q-Learning procedure is the difficultly in finding a useful discretization scheme such that a high-performing agent could be achieved. I could see how using a discretized process could be a viable choice in lower dimensional domains. It would be interesting to see if additional runs and varying the “high-value” area would yield results.
-
-Deep SARSA likely performed better in the Lunar Lander environment is because the neural network was able to learn complex patterns through backpropagation and without explicit mapping to features like we did with discretized Q-Learning. Although vanilla Q-Learning would work well for small state spaces, a large continuous state space appears to be handled much better by a parametric function approximator such as a neural network.
-
-### References
-1. Richard S. Sutton and Andrew G. Barto, "Reinforcement Learning: An Introduction," MIT Press, 2nd edition, 2020.
-2. V. Mnih et al., "Playing Atari with Deep Reinforcement Learning," 2013.
+[5] Carroll, M., Shah, R., Ho, M. K., Griffiths, T. L., Seshia, S. A., Abbeel, P., & Dragan, A. D. (2019). "On the Utility of Learning about Humans for Human-AI Coordination". arXiv preprint arXiv:1910.05789. GitHub repository: [Human Compatible AI Overcooked AI Environment](https://github.com/HumanCompatibleAI/overcooked_ai).
