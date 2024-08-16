@@ -112,14 +112,14 @@ analytics:
 # Site Author
 author:
   name             : "Brandon Luo"
-  avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
+  avatar           : "/assets/images/profile-pic.jpg"
   bio              : I'm an enthusiast of ML/AI applications to finance and decision making
   location         : California
-  email            : 
+  email            : brandon.y.luo@gmail.com
   links:
     - label: "Email"
       icon: "fas fa-fw fa-envelope-square"
-      url: "mailto:brandon.y.luo@email.com"
+      # url: "mailto:brandon.y.luo@email.com"
     - label: "Website"
       icon: "fas fa-fw fa-link"
       # url: "https://your-website.com"
